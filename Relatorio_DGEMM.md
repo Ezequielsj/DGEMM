@@ -109,7 +109,11 @@ Interpretar os resultados observando:
 
 Os resultados preliminares mostram ganhos consistentes com AVX2, FMA, unrolling e blocking. O OpenMP não apresentou ganho em `N=32`, indicando que a sobrecarga de threads precisa ser amortizada por problemas maiores. A corretude numérica foi validada em `N=32` com erro máximo zero. As principais limitações restantes são a campanha reduzida de tamanhos e a indisponibilidade de MKL e PyTorch/CUDA.
 
-## 9. Referências
+## 9. Requisitos e limitações do ambiente
+
+Os experimentos foram realizados em Windows, com Intel Core i5-10210U, 4 nucleos, 8 threads, aproximadamente 8 GB de RAM, GCC 8.1.0 e Python 3.7.8. O ambiente suportou AVX2, FMA e OpenMP. Como `make` nao estava instalado, os programas C foram compilados diretamente com GCC. MKL, PyTorch e CUDA nao estavam disponiveis e, portanto, nao foram incluidos na comparacao principal.
+
+## 10. Referências
 
 - PATTERSON, David A.; HENNESSY, John L. *Computer Organization and Design: The Hardware/Software Interface, RISC-V Edition*. Morgan Kaufmann.
 - Documentação das bibliotecas utilizadas e outras fontes consultadas.

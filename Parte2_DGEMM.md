@@ -69,6 +69,10 @@ A execucao confirmou que as duas implementacoes otimizadas compilam e funcionam 
 
 A Parte 3 acrescenta cache blocking/tiling e investiga OpenMP e o numero de threads.
 
+## Requisitos e limitacoes do ambiente
+
+Os testes foram realizados em Windows, com Intel Core i5-10210U, 4 nucleos, 8 threads, aproximadamente 8 GB de RAM e GCC 8.1.0. O ambiente suportou as flags `-mavx2`, `-mfma` e OpenMP. O comando `make` nao estava instalado, e MKL, PyTorch e CUDA nao foram utilizados por indisponibilidade das dependencias.
+
 ## Referencia
 
 PATTERSON, David A.; HENNESSY, John L. *Computer Organization and Design: The Hardware/Software Interface, RISC-V Edition*. Morgan Kaufmann.
