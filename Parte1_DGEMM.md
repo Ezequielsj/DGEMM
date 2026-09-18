@@ -67,8 +67,6 @@ A principal conclusao desta etapa e que a implementacao escalar compila e execut
 
 A Parte 2 acrescentara instrucoes SIMD com AVX2, FMA e desenrolamento de lacos. A comparacao devera manter o mesmo tamanho de matriz e criterio de medicao sempre que a implementacao permitir.
 
-## Referencia
-
 ## Requisitos e limitacoes do ambiente
 
 Os testes foram realizados em Windows, com Intel Core i5-10210U, 4 nucleos, 8 threads, aproximadamente 8 GB de RAM, GCC 8.1.0 e Python 3.7.8. O compilador suportou AVX2, FMA e OpenMP. O comando `make` nao estava instalado, por isso a compilacao foi feita diretamente com GCC. MKL, PyTorch e CUDA nao estavam disponiveis no ambiente.
