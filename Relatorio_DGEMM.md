@@ -13,7 +13,7 @@ Repositório: https://github.com/Ezequielsj/DGEMM
 
 O DGEMM (Double-precision General Matrix Multiplication) calcula o produto de duas matrizes de ponto flutuante em dupla precisão. A operação possui custo computacional cúbico, aproximadamente $2N^3$ operações de ponto flutuante para matrizes quadradas de dimensão $N$.
 
-Este trabalho investiga como decisões de implementação e recursos da arquitetura do computador alteram o desempenho dessa operação. O projeto anterior será usado somente como referência para as técnicas, enquanto os resultados deste relatório serão obtidos em uma nova rodada de experimentos.
+Este trabalho investiga como decisões de implementação e recursos da arquitetura do computador alteram o desempenho dessa operação. O projeto anterior será usado somente como referência para as técnicas, enquanto os resultados deste relatório serão obtidos em uma nova rodada de experimentos. Este documento consolida as duas etapas parciais e a entrega final.
 
 ## 2. Objetivos
 

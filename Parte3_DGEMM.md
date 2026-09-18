@@ -1,4 +1,4 @@
-# Parte 3 - Blocking, OpenMP e consolidacao
+# Entrega Final - Blocking, OpenMP e consolidacao
 
 Repositorio: https://github.com/Ezequielsj/DGEMM
 
@@ -11,7 +11,7 @@ Repositorio: https://github.com/Ezequielsj/DGEMM
 
 ## 1. Objetivo
 
-A terceira parte acrescenta localidade de cache por blocking e paralelismo entre blocos com OpenMP. Tambem consolida a progressao observada nas partes anteriores e registra uma primeira avaliacao do efeito do numero de threads.
+Esta entrega final acrescenta localidade de cache por blocking e paralelismo entre blocos com OpenMP. Tambem consolida a progressao observada nas duas entregas parciais e registra a avaliacao do efeito do numero de threads.
 
 ## 2. Blocking ou tiling
 
