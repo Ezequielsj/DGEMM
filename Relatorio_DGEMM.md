@@ -49,6 +49,28 @@ Tamanhos avaliados nesta versão: $N \in \{32, 64, 128\}$. As comparações entr
 
 Para cada resultado, foi usada tolerância `1e-12` no teste independente [validate_dgemm.c](validate_dgemm.c). Em `N=32`, as versões AVX2, FMA/unrolling, blocking e OpenMP obtiveram erro máximo `0,000e+000`.
 
+## 4. Metodologia de reprodução
+
+As versões C foram compiladas diretamente no GCC porque o comando `make` não estava disponível:
+
+```text
+gcc -O3 -Wall -o Chapter2/parte1_baseline.exe Chapter2/main_algorithm.c
+gcc -O3 -Wall -mavx2 -mfma -o Chapter3/parte2_simd.exe Chapter3/main_algorithm.c
+gcc -O3 -Wall -mavx2 -mfma -o Chapter4/parte2_unroll.exe Chapter4/main_algorithm.c
+gcc -O3 -Wall -mavx2 -mfma -o Chapter5/parte3_blocking.exe Chapter5/main_algorithm.c
+gcc -O3 -Wall -mavx2 -mfma -fopenmp -o Chapter6/parte3_openmp.exe Chapter6/main_algorithm.c
+```
+
+As medições principais usaram `N=32`, janela de 0,5 segundos e três repetições para as versões da Parte 2. A Parte 1 também possui referências preliminares com `N=64` e `N=128`. Na Parte 3, OpenMP foi comparado com 1, 2 e 4 threads.
+
+A métrica utilizada foi:
+
+$$
+\mathrm{GFLOPS} = \frac{2N^3 \times m}{t \times 10^9}
+$$
+
+onde `m` é o número de multiplicações realizadas e `t` é o tempo acumulado em segundos. Os dados brutos estão nos arquivos CSV próprios do projeto.
+
 ## 5. Implementações avaliadas
 
 ### 5.1 Baseline
@@ -95,7 +117,17 @@ Com `N=32`, o blocking obteve `25,48 GFLOPS`, enquanto OpenMP obteve `10,06`, `2
 
 No experimento SIMD, o baseline obteve `2,53 GFLOPS`, AVX2 obteve `12,05 GFLOPS` e AVX2 + FMA + unrolling obteve `28,03 GFLOPS` em média.
 
+### 6.5 Validação numérica
+
+As versões otimizadas foram comparadas com uma referência escalar independente no arquivo [validate_dgemm.c](validate_dgemm.c). Para `N=32`, AVX2, FMA/unrolling, blocking e OpenMP apresentaram erro máximo `0,000e+000`, com status `PASS` e tolerância `1e-12`.
+
 ## 7. Discussão
+
+Os resultados indicam que AVX2 aumentou o desempenho em relação ao baseline, enquanto FMA e unrolling trouxeram ganho adicional. O blocking também apresentou bom resultado. Já o OpenMP não compensou para `N=32`, pois a matriz pequena não forneceu trabalho suficiente para amortizar o custo de criação, distribuição e sincronização das threads.
+
+As conclusões são específicas da máquina testada. O tamanho `N=32` é pequeno para avaliar escalabilidade OpenMP, e MKL, PyTorch e CUDA não foram executados por falta das dependências correspondentes.
+
+Para uma campanha futura, seria interessante testar matrizes maiores e mais tamanhos de bloco.
 
 Interpretar os resultados observando:
 
