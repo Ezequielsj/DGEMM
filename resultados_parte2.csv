@@ -1,0 +1,10 @@
+etapa,versao,repeticao,n,tempo_alvo_s,multiplicacoes,tempo_total_s,gflops,speedup
+Parte 2,C escalar,1,32,0.50,18673,0.50,2.45,1.00
+Parte 2,C escalar,2,32,0.50,20470,0.51,2.63,1.00
+Parte 2,C escalar,3,32,0.50,19268,0.50,2.53,1.00
+Parte 2,AVX2,1,32,0.50,94124,0.50,12.34,4.76
+Parte 2,AVX2,2,32,0.50,88948,0.50,11.66,4.76
+Parte 2,AVX2,3,32,0.50,94608,0.51,12.16,4.76
+Parte 2,AVX2 + FMA + unrolling,1,32,0.50,213979,0.50,28.05,11.08
+Parte 2,AVX2 + FMA + unrolling,2,32,0.50,222709,0.50,29.19,11.08
+Parte 2,AVX2 + FMA + unrolling,3,32,0.50,209022,0.51,26.86,11.08

@@ -1,0 +1,14 @@
+.vscode/
+*.exe
+*.log
+__pycache__/
+.ipynb_checkpoints/
+
+# Artefatos do projeto anterior, mantidos apenas como referencia local
+OLD/
+Analise.txt
+performance_results.csv
+aggregated_performance_results.csv
+MKL Results log.md
+Performance Analysis.ipynb
+speedup_evolution.png

@@ -1,0 +1,5 @@
+etapa,versao,threads,n,tempo_alvo_s,multiplicacoes,tempo_total_s,gflops,speedup_vs_blocking
+Parte 3,Blocking,1,32,0.50,194382,0.50,25.48,1.00
+Parte 3,OpenMP,1,32,0.50,76749,0.50,10.06,0.39
+Parte 3,OpenMP,2,32,0.50,16057,0.50,2.10,0.08
+Parte 3,OpenMP,4,32,0.50,8666,0.50,1.14,0.04

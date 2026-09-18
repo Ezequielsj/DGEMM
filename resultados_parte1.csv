@@ -1,0 +1,6 @@
+etapa,versao,repeticao,n,tempo_alvo_s,multiplicacoes,tempo_total_s,gflops,speedup
+Parte 1,C escalar,1,32,0.50,18673,0.50,2.45,1.00
+Parte 1,C escalar,2,32,0.50,20470,0.51,2.63,1.00
+Parte 1,C escalar,3,32,0.50,19268,0.50,2.53,1.00
+Parte 1,C escalar,preliminar,64,0.20,914,0.21,2.28,1.00
+Parte 1,C escalar,preliminar,128,0.20,92,0.20,1.93,1.00
