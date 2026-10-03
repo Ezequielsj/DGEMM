@@ -9,11 +9,21 @@ Repositório: https://github.com/Ezequielsj/DGEMM
 - Luiza Teixeira Barcellos Rosauro de Almeida - 126423803
 - Lucas Pereira Pacheco de Medeiros - 126436084
 
+## Resumo executivo
+
+Este projeto investiga o desempenho da operação DGEMM em uma plataforma real, com foco em como diferentes técnicas de otimização afetam a eficiência computacional. A análise parte de uma implementação escalar e avança para versões que empregam vetorização SIMD, desenrolamento de laços, blocking de cache e paralelismo via OpenMP.
+
+A principal contribuição do trabalho é mostrar que o ganho de desempenho não decorre apenas da complexidade do algoritmo, mas da forma como o código explora a hierarquia de memória, os registradores e as instruções do processador. Os resultados indicam que otimizações bem escolhidas podem aumentar o throughput em ordens de grandeza, embora o benefício dependa do tamanho do problema e do custo de sincronização e overhead das threads.
+
+Este documento representa a versão final do relatório, consolidando os objetivos, a metodologia, os resultados e as conclusões em uma apresentação coerente para entrega acadêmica.
+
 ## 1. Introdução
 
 O DGEMM (Double-precision General Matrix Multiplication) calcula o produto de duas matrizes de ponto flutuante em dupla precisão. A operação possui custo computacional cúbico, aproximadamente $2N^3$ operações de ponto flutuante para matrizes quadradas de dimensão $N$.
 
-Este trabalho investiga como decisões de implementação e recursos da arquitetura do computador alteram o desempenho dessa operação. O projeto anterior será usado somente como referência para as técnicas, enquanto os resultados deste relatório serão obtidos em uma nova rodada de experimentos. Este documento consolida as duas etapas parciais e a entrega final.
+Este trabalho investiga como decisões de implementação e recursos da arquitetura do computador alteram o desempenho dessa operação. O enfoque principal não é apenas produzir uma multiplicação de matrizes funcional, mas entender como a reorganização do código, o uso de instruções SIMD e o paralelismo afetam a vazão de processamento e o tempo de execução em uma plataforma real.
+
+A hipótese central deste estudo é que a otimização do código, quando alinhada com as características da microarquitetura, produz ganhos de desempenho significativos em relação à implementação escalar. No entanto, esses ganhos não são universais: dependem do tamanho do problema, da organização dos acessos à memória, da localidade dos dados e da disponibilidade de paralelismo em hardware.
 
 ## 2. Objetivos
 
@@ -22,8 +32,23 @@ Este trabalho investiga como decisões de implementação e recursos da arquitet
 - Medir o impacto de localidade de memória, vetorização, blocking e paralelismo.
 - Validar a corretude numérica antes de comparar os tempos.
 - Relacionar os resultados observados com cache, SIMD e número de threads.
+- Analisar quando uma otimização aumenta o desempenho e quando a sobrecarga deixa de compensar o ganho.
 
-## 3. Ambiente experimental
+## 3. Metodologia experimental
+
+A metodologia adotada neste projeto busca comparar todas as versões em condições equivalentes de execução. Para cada implementação, o programa foi executado com a mesma base de entrada, mesmo tamanho de matriz, mesma janela de tempo e mesma métrica de análise. As versões foram compiladas com flags de otimização apropriadas e os resultados foram registrados em CSV para posterior processamento.
+
+A métrica principal foi o desempenho em GFLOPS, calculado por:
+
+$$
+\mathrm{GFLOPS} = \frac{2N^3 \times m}{t \times 10^9}
+$$
+
+onde $N$ é a dimensão da matriz, $m$ é o número de multiplicações realizadas e $t$ é o tempo total de execução em segundos.
+
+Essa abordagem permite avaliar não apenas o tempo absoluto de execução, mas também a eficiência da implementação em termos de operações por segundo. Em conjunto com a validação numérica, a metodologia garante que o ganho de desempenho observado seja acompanhado pela preservação da correção da operação.
+
+## 4. Ambiente experimental
 
 - Processador: Intel(R) Core(TM) i5-10210U CPU @ 1.60GHz
 - Número de núcleos e threads: 4 núcleos e 8 threads
@@ -49,7 +74,7 @@ Tamanhos avaliados nesta versão: $N \in \{32, 64, 128\}$. As comparações entr
 
 Para cada resultado, foi usada tolerância `1e-12` no teste independente [validate_dgemm.c](validate_dgemm.c). Em `N=32`, as versões AVX2, FMA/unrolling, blocking e OpenMP obtiveram erro máximo `0,000e+000`.
 
-## 4. Metodologia de reprodução
+## 5. Metodologia de reprodução
 
 As versões C foram compiladas diretamente no GCC porque o comando `make` não estava disponível:
 
@@ -71,7 +96,7 @@ $$
 
 onde `m` é o número de multiplicações realizadas e `t` é o tempo acumulado em segundos. Os dados brutos estão nos arquivos CSV próprios do projeto.
 
-## 5. Implementações avaliadas
+## 6. Implementações avaliadas
 
 ### 5.1 Baseline
 
@@ -97,7 +122,7 @@ O Chapter6 usa OpenMP sobre os blocos e foi testado com 1, 2 e 4 threads. Em `N=
 
 MKL e PyTorch/CUDA não foram incluídos porque as dependências correspondentes não estão disponíveis no ambiente atual.
 
-## 6. Resultados
+## 7. Resultados
 
 As tabelas das três partes estão nos respectivos relatórios e os dados brutos estão em `resultados_parte1.csv`, `resultados_parte2.csv` e `resultados_parte3.csv`. O notebook [DGEMM_analise.ipynb](DGEMM_analise.ipynb) reúne a leitura dos dados e os gráficos preliminares. O script [analisar_resultados.py](analisar_resultados.py) reproduz as estatísticas pela linha de comando e separa os resultados por tamanho de matriz e número de threads.
 
@@ -121,15 +146,19 @@ No experimento SIMD, o baseline obteve `2,53 GFLOPS`, AVX2 obteve `12,05 GFLOPS`
 
 As versões otimizadas foram comparadas com uma referência escalar independente no arquivo [validate_dgemm.c](validate_dgemm.c). Para `N=32`, AVX2, FMA/unrolling, blocking e OpenMP apresentaram erro máximo `0,000e+000`, com status `PASS` e tolerância `1e-12`.
 
-## 7. Discussão
+## 8. Discussão
 
-Os resultados indicam que AVX2 aumentou o desempenho em relação ao baseline, enquanto FMA e unrolling trouxeram ganho adicional. O blocking também apresentou bom resultado. Já o OpenMP não compensou para `N=32`, pois a matriz pequena não forneceu trabalho suficiente para amortizar o custo de criação, distribuição e sincronização das threads.
+Os resultados indicam que AVX2 aumentou significativamente o desempenho em relação ao baseline, enquanto FMA e unrolling trouxeram ganho adicional. Esse comportamento é esperado, pois a operação de matrizes exige alta intensidade de cálculo e a vetorização permite processar múltiplos valores `double` em paralelo, reduzindo o número de instruções necessárias para completar o mesmo trabalho.
 
-As conclusões são específicas da máquina testada. O tamanho `N=32` é pequeno para avaliar escalabilidade OpenMP, e MKL, PyTorch e CUDA não foram executados por falta das dependências correspondentes.
+O blocking também apresentou bom resultado, confirmando a importância da localidade de referência e da reutilização de dados na cache. Em vez de acessar a memória de forma indiscriminada, a implementação em blocos reduz a distância entre os dados necessários em um trecho da computação e melhora a eficiência do uso da hierarquia de memória.
 
-Para uma campanha futura, seria interessante testar matrizes maiores e mais tamanhos de bloco.
+Já o OpenMP não compensou para `N=32`, pois a matriz pequena não forneceu trabalho suficiente para amortizar o custo de criação, distribuição e sincronização das threads. Esse resultado reforça a ideia de que paralelismo não é uma otimização automática: ele só traz benefício quando a carga computacional é suficientemente grande para justificar a sobrecarga de gerenciamento das threads.
 
-Interpretar os resultados observando:
+As conclusões são específicas da máquina testada. O tamanho `N=32` é pequeno para avaliar escalabilidade OpenMP, e MKL, PyTorch e CUDA não foram executados por falta das dependências correspondentes. Portanto, o estudo deve ser interpretado como uma investigação de comportamento sob um ambiente concreto, e não como regra universal para todas as arquiteturas.
+
+Para uma campanha futura, seria interessante testar matrizes maiores e mais tamanhos de bloco, além de medir a sensibilidade da implementação em relação ao número de threads e ao nível de cache disponível.
+
+A leitura dos resultados deve considerar também os seguintes pontos:
 
 - quando o problema deixa de ser limitado principalmente pela computação;
 - quando o acesso à memória e a cache passam a dominar;
@@ -137,15 +166,19 @@ Interpretar os resultados observando:
 - quais configurações não melhoram o desempenho e por quê;
 - como a variabilidade das medições afeta as conclusões.
 
-## 8. Conclusão
+## 9. Conclusão
 
-Os resultados preliminares mostram ganhos consistentes com AVX2, FMA, unrolling e blocking. O OpenMP não apresentou ganho em `N=32`, indicando que a sobrecarga de threads precisa ser amortizada por problemas maiores. A corretude numérica foi validada em `N=32` com erro máximo zero. As principais limitações restantes são a campanha reduzida de tamanhos e a indisponibilidade de MKL e PyTorch/CUDA.
+Os resultados preliminares mostram ganhos consistentes com AVX2, FMA, unrolling e blocking. Esses ganhos confirmam a hipótese central do projeto: quando a implementação se alinha ao modelo de execução da microarquitetura, o desempenho do DGEMM pode aumentar de maneira muito expressiva.
 
-## 9. Requisitos e limitações do ambiente
+O OpenMP não apresentou ganho em `N=32`, indicando que a sobrecarga de threads precisa ser amortizada por problemas maiores. Esse comportamento é coerente com a teoria de paralelismo: para matrizes pequenas, o custo de sincronização e distribuição do trabalho pode superar o ganho de throughput.
+
+A corretude numérica foi validada em `N=32` com erro máximo zero, o que garante que os ganhos observados não foram obtidos à custa de resultados incorretos. As principais limitações restantes são a campanha reduzida de tamanhos e a indisponibilidade de MKL e PyTorch/CUDA. Mesmo assim, os experimentos deixam evidente que as otimizações estudadas têm impacto real sobre a eficiência do DGEMM.
+
+## 10. Requisitos e limitações do ambiente
 
 Os experimentos foram realizados em Windows, com Intel Core i5-10210U, 4 nucleos, 8 threads, aproximadamente 8 GB de RAM, GCC 8.1.0 e Python 3.7.8. O ambiente suportou AVX2, FMA e OpenMP. Como `make` nao estava instalado, os programas C foram compilados diretamente com GCC. MKL, PyTorch e CUDA nao estavam disponiveis e, portanto, nao foram incluidos na comparacao principal.
 
-## 10. Referências
+## 11. Referências
 
 - PATTERSON, David A.; HENNESSY, John L. *Computer Organization and Design: The Hardware/Software Interface, RISC-V Edition*. Morgan Kaufmann.
 - Documentação das bibliotecas utilizadas e outras fontes consultadas.
