@@ -2,7 +2,7 @@
 
 # Compiler and common flags
 CC = gcc
-CFLAGS = -O3 -Wall -Wno-unknown-pragmas
+CFLAGS = -O3 -Wall -Wno-unknown-pragmas -mavx2 -mfma -fopenmp
 
 # Specific flags for different versions
 AVX_FLAGS = -mavx2 -mfma
@@ -22,28 +22,36 @@ all: ch2 ch3 ch4 ch5 ch6 mkl
 
 # Chapter 2: Basic implementation
 ch2: Chapter2/program.exe
-Chapter2/program.exe: Chapter2/main_algorithm.c
+Chapter2/program.exe: Chapter2/main_algorithm.c dgemm_cli.h dgemm_kernels.h
 	$(CC) $(CFLAGS) -o "$@" "$<"
 
 # Chapter 3: AVX implementation
 ch3: Chapter3/program.exe
-Chapter3/program.exe: Chapter3/main_algorithm.c
+Chapter3/program.exe: Chapter3/main_algorithm.c dgemm_cli.h dgemm_kernels.h
 	$(CC) $(CFLAGS) $(AVX_FLAGS) -o "$@" "$<"
 
 # Chapter 4: AVX with loop unrolling
 ch4: Chapter4/program.exe
-Chapter4/program.exe: Chapter4/main_algorithm.c
+Chapter4/program.exe: Chapter4/main_algorithm.c dgemm_cli.h dgemm_kernels.h
 	$(CC) $(CFLAGS) $(AVX_FLAGS) -o "$@" "$<"
 
 # Chapter 5: AVX with cache blocking
 ch5: Chapter5/program.exe
-Chapter5/program.exe: Chapter5/main_algorithm.c
+Chapter5/program.exe: Chapter5/main_algorithm.c dgemm_cli.h dgemm_kernels.h
 	$(CC) $(CFLAGS) $(AVX_FLAGS) -o "$@" "$<"
 
 # Chapter 6: AVX with cache blocking and OpenMP
 ch6: Chapter6/program.exe
-Chapter6/program.exe: Chapter6/main_algorithm.c
+Chapter6/program.exe: Chapter6/main_algorithm.c dgemm_cli.h dgemm_kernels.h
 	$(CC) $(CFLAGS) $(AVX_FLAGS) $(OMP_FLAGS) -o "$@" "$<"
+
+benchmark: benchmark_dgemm.exe
+benchmark_dgemm.exe: benchmark_dgemm.c dgemm_kernels.h
+	$(CC) $(CFLAGS) -std=c11 -o "$@" "$<"
+
+validate: validate_dgemm.exe
+validate_dgemm.exe: validate_dgemm.c dgemm_cli.h dgemm_kernels.h
+	$(CC) $(CFLAGS) -std=c11 -o "$@" "$<"
 
 # MKL
 mkl: MKL/program.exe
@@ -63,4 +71,4 @@ clean:
 	-del /Q MKL\\program.exe
 
 # Phony targets that don't represent files
-.PHONY: all clean ch2 ch3 ch4 ch5 ch6 mkl
+.PHONY: all clean ch2 ch3 ch4 ch5 ch6 mkl benchmark validate

@@ -23,18 +23,22 @@ The central hypothesis is that optimization techniques such as AVX2, FMA, loop u
 - `Chapter4/` - AVX2 + FMA + unrolling
 - `Chapter5/` - blocking / tiling version
 - `Chapter6/` - blocking + OpenMP version
+- `dgemm_kernels.h` - shared kernels used by the chapter executables, benchmark and validator
+- `dgemm_cli.h` - common CLI and portable timing/allocation helpers
+- `benchmark_dgemm.c` - deterministic campaign for matrix sizes, blocks and thread counts
 - `MKL/` - MKL reference implementation
 - `PyTorch_CPU/` and `PyTorch_GPU/` - high-level reference runs
 - `run_and_collect.py` - execution and CSV collection script
 - `analisar_resultados.py` - summary statistics script
-- `validate_dgemm.c` - independent validation of correctness
+- `validate_dgemm.c` - checks the shared production kernels against a scalar reference
+- `resultados_campanha.csv` - raw results from the expanded matched campaign
 - `Relatorio_DGEMM.md` - final report
 - `resultados_parte1.csv`, `resultados_parte2.csv`, `resultados_parte3.csv` - raw data
 - `DGEMM_analise.ipynb` - notebook for exploratory analysis
 
 ## Requirements
 
-The project was designed for a Windows environment with GCC and AVX2-capable hardware. For the most complete execution flow, the machine should include:
+The original measurements were collected on Windows. The expanded matched campaign can be reproduced on Windows or WSL 2 with GCC and AVX2-capable hardware; the checked-in campaign CSV was collected on Ubuntu 24.04 under WSL 2. The machine should include:
 
 - Python 3
 - GCC with support for AVX2 and FMA
@@ -47,36 +51,31 @@ The project was designed for a Windows environment with GCC and AVX2-capable har
 ### Compile the C versions
 
 ```bash
-make all
+make ch2 ch3 ch4 ch5 ch6 benchmark validate
 ```
 
-Or directly with GCC:
+### Run one chapter executable
 
 ```bash
-gcc -O3 -Wall -o Chapter2/program.exe Chapter2/main_algorithm.c
-gcc -O3 -Wall -mavx2 -mfma -o Chapter3/program.exe Chapter3/main_algorithm.c
-gcc -O3 -Wall -mavx2 -mfma -o Chapter4/program.exe Chapter4/main_algorithm.c
-gcc -O3 -Wall -mavx2 -mfma -o Chapter5/program.exe Chapter5/main_algorithm.c
-gcc -O3 -Wall -mavx2 -mfma -fopenmp -o Chapter6/program.exe Chapter6/main_algorithm.c
+./Chapter5/program.exe 256 32
+./Chapter6/program.exe 256 32 4
 ```
 
-### Run the benchmark collection script
+Arguments are `N [block_size [threads]]`. Blocking sizes must divide `N` and be multiples of 4.
+
+### Run the matched benchmark campaign
 
 ```bash
-python run_and_collect.py --versions chapter2 chapter3 chapter4 chapter5 chapter6 --num_iterations 5
+./benchmark_dgemm.exe resultados_campanha.csv 5 1
 ```
 
-### Reproduce summary statistics
+The campaign uses `N=128` and `N=256`, block sizes `8`, `16`, `32`, and `64`, and OpenMP thread counts `1`, `2`, and `4`. It performs one warmup and five measured repetitions per configuration. All variants at a given `N` share deterministic input matrices and monotonic wall-clock timing. The CSV stores the seed, raw times, GFLOPS, maximum absolute error, and validation status.
+
+### Validate and summarize results
 
 ```bash
-python analisar_resultados.py
-```
-
-### Validate correctness
-
-```bash
-gcc -O3 -Wall -mavx2 -mfma -fopenmp -o validate_dgemm.exe validate_dgemm.c
 ./validate_dgemm.exe
+python analisar_resultados.py
 ```
 
 ## Final deliverable

@@ -1,6 +1,17 @@
 # Investigação de desempenho do DGEMM
 
-Repositório: https://github.com/Ezequielsj/DGEMM
+## Links do projeto no GitHub
+
+- Repositório principal: [DGEMM](https://github.com/Ezequielsj/DGEMM)
+- Relatório final: [Relatorio_DGEMM.md](https://github.com/Ezequielsj/DGEMM/blob/master/Relatorio_DGEMM.md)
+- Resultados da Parte 1: [resultados_parte1.csv](https://github.com/Ezequielsj/DGEMM/blob/master/resultados_parte1.csv)
+- Resultados da Parte 2: [resultados_parte2.csv](https://github.com/Ezequielsj/DGEMM/blob/master/resultados_parte2.csv)
+- Resultados da Parte 3: [resultados_parte3.csv](https://github.com/Ezequielsj/DGEMM/blob/master/resultados_parte3.csv)
+- Dados brutos da campanha ampliada: [resultados_campanha.csv](https://github.com/Ezequielsj/DGEMM/blob/master/resultados_campanha.csv)
+- Script de análise: [analisar_resultados.py](https://github.com/Ezequielsj/DGEMM/blob/master/analisar_resultados.py)
+- Benchmark reprodutível: [benchmark_dgemm.c](https://github.com/Ezequielsj/DGEMM/blob/master/benchmark_dgemm.c)
+- Kernels compartilhados: [dgemm_kernels.h](https://github.com/Ezequielsj/DGEMM/blob/master/dgemm_kernels.h)
+- Validação numérica: [validate_dgemm.c](https://github.com/Ezequielsj/DGEMM/blob/master/validate_dgemm.c)
 
 ## Integrantes
 
@@ -36,7 +47,7 @@ A hipótese central deste estudo é que a otimização do código, quando alinha
 
 ## 3. Metodologia experimental
 
-A metodologia adotada neste projeto busca comparar todas as versões em condições equivalentes de execução. Para cada implementação, o programa foi executado com a mesma base de entrada, mesmo tamanho de matriz, mesma janela de tempo e mesma métrica de análise. As versões foram compiladas com flags de otimização apropriadas e os resultados foram registrados em CSV para posterior processamento.
+O projeto contém uma campanha preliminar, coletada no Windows, e uma campanha ampliada pareada, executada no WSL 2. Na campanha ampliada, as variantes de cada dimensão usam as mesmas matrizes determinísticas, inicializam `C` com zero, recebem um aquecimento e cinco repetições medidas. Todas usam o mesmo relógio monotônico de parede, compilador e métrica; cada linha bruta e sua validação ficam registradas em CSV.
 
 A métrica principal foi o desempenho em GFLOPS, calculado por:
 
@@ -53,14 +64,13 @@ Essa abordagem permite avaliar não apenas o tempo absoluto de execução, mas t
 - Processador: Intel(R) Core(TM) i5-10210U CPU @ 1.60GHz
 - Número de núcleos e threads: 4 núcleos e 8 threads
 - Memória RAM: aproximadamente 8 GB
-- Sistema operacional: Windows
-- Compilador e versão: GCC 8.1.0 (MinGW-w64)
-- Flags de compilação: `-O3 -Wall`; versões SIMD usam `-mavx2 -mfma`
+- Campanha preliminar: Windows e GCC 8.1.0 (MinGW-w64)
+- Campanha ampliada: Ubuntu 24.04 no WSL 2, GCC 13.3.0, 4 núcleos/8 threads expostos e flags `-O3 -mavx2 -mfma -fopenmp`
 - GPU: NVIDIA GeForce MX110 e Intel UHD Graphics
 - Versão do driver da GPU: 451.67
-- Observação: o comando `make` não está disponível no ambiente atual.
+- A CPU exposta ao WSL reporta suporte a AVX2 e FMA.
 
-Cada implementação deve ser executada com os mesmos dados de entrada, período de aquecimento e número de repetições. Para cada configuração, registrar o tempo, a mediana, a dispersão e o desempenho em GFLOPS.
+Na campanha ampliada foram usados `N=128` e `N=256`; os blocos avaliados foram `8`, `16`, `32` e `64`, todos divisores de ambos os tamanhos. OpenMP foi medido com 1, 2 e 4 threads. O benchmark registra cinco observações por configuração, além de um aquecimento não registrado.
 
 A métrica principal será:
 
@@ -70,23 +80,26 @@ $$
 
 onde $N$ é a dimensão da matriz e $t$ é o tempo necessário para uma multiplicação.
 
-Tamanhos avaliados nesta versão: $N \in \{32, 64, 128\}$. As comparações entre técnicas SIMD, blocking e OpenMP foram feitas com $N=32$, respeitando os múltiplos exigidos por cada implementação.
+Os dados preliminares cobrem `N=32`, `64` e `128`; a campanha pareada ampliada compara as variantes em `N=128` e `N=256`. As variantes sem blocking separam AVX2, FMA e unrolling; blocking e OpenMP foram comparados para quatro tamanhos de bloco.
 
-Para cada resultado, foi usada tolerância `1e-12` no teste independente [validate_dgemm.c](validate_dgemm.c). Em `N=32`, as versões AVX2, FMA/unrolling, blocking e OpenMP obtiveram erro máximo `0,000e+000`.
+O validador [validate_dgemm.c](validate_dgemm.c) executa os mesmos kernels compartilhados chamados pelos executáveis dos Chapters 2 a 6, contra uma referência escalar independente. Foram validados `N=32`, `128` e `256`, todos os blocos válidos e 1, 2 e 4 threads; todos passaram com erro máximo zero e tolerância absoluta `1e-10`.
 
 ## 5. Metodologia de reprodução
 
-As versões C foram compiladas diretamente no GCC porque o comando `make` não estava disponível:
+Os executáveis, o benchmark e o validador podem ser compilados com os alvos do Makefile:
 
 ```text
-gcc -O3 -Wall -o Chapter2/parte1_baseline.exe Chapter2/main_algorithm.c
-gcc -O3 -Wall -mavx2 -mfma -o Chapter3/parte2_simd.exe Chapter3/main_algorithm.c
-gcc -O3 -Wall -mavx2 -mfma -o Chapter4/parte2_unroll.exe Chapter4/main_algorithm.c
-gcc -O3 -Wall -mavx2 -mfma -o Chapter5/parte3_blocking.exe Chapter5/main_algorithm.c
-gcc -O3 -Wall -mavx2 -mfma -fopenmp -o Chapter6/parte3_openmp.exe Chapter6/main_algorithm.c
+make ch2 ch3 ch4 ch5 ch6 benchmark validate
 ```
 
-As medições principais usaram `N=32`, janela de 0,5 segundos e três repetições para as versões da Parte 2. A Parte 1 também possui referências preliminares com `N=64` e `N=128`. Na Parte 3, OpenMP foi comparado com 1, 2 e 4 threads.
+O benchmark ampliado é reproduzido por:
+
+```text
+./benchmark_dgemm.exe resultados_campanha.csv 5 1
+./validate_dgemm.exe
+```
+
+Os argumentos do benchmark são caminho do CSV, número de repetições e número de aquecimentos. A campanha usa seed `20261003 + N`; ela registra separadamente AVX2, AVX2 + FMA, AVX2 + FMA + unrolling x4, blocking com cada bloco e OpenMP com cada combinação de bloco e threads.
 
 A métrica utilizada foi:
 
@@ -98,65 +111,83 @@ onde `m` é o número de multiplicações realizadas e `t` é o tempo acumulado 
 
 ## 6. Implementações avaliadas
 
-### 5.1 Baseline
+### 6.1 Baseline
 
 A Parte 1 apresenta o baseline em C escalar, com três laços aninhados e sem SIMD ou OpenMP. Os resultados estão em [Parte1_DGEMM.md](Parte1_DGEMM.md) e [resultados_parte1.csv](resultados_parte1.csv).
 
-### 5.2 Reorganização dos laços
+### 6.2 Reorganização dos laços
 
 As matrizes C usadas nos capítulos em C seguem o layout column-major. A ordem dos laços foi mantida compatível com os índices desse armazenamento para permitir a progressão até SIMD e blocking.
 
-### 5.3 Vetorização SIMD
+### 6.3 Vetorização SIMD
 
 O Chapter3 processa quatro valores `double` por registrador AVX2. O Chapter4 acrescenta FMA e quatro acumuladores SIMD. A análise e os dados estão em [Parte2_DGEMM.md](Parte2_DGEMM.md) e [resultados_parte2.csv](resultados_parte2.csv).
 
-### 5.4 Blocking ou tiling
+### 6.4 Blocking ou tiling
 
-O Chapter5 usa blocos de `32 x 32` para aumentar a reutilização dos dados na cache. A hipótese e os resultados estão em [Parte3_DGEMM.md](Parte3_DGEMM.md).
+O Chapter5 usa blocking parametrizado e a campanha avalia blocos de `8`, `16`, `32` e `64`. O kernel bloqueado mantém AVX2 e FMA com um acumulador vetorial para que o tamanho de bloco seja comparado sem adicionar unrolling nessa variante. Os resultados estão em [Parte3_DGEMM.md](Parte3_DGEMM.md).
 
-### 5.5 Paralelismo
+### 6.5 Paralelismo
 
-O Chapter6 usa OpenMP sobre os blocos e foi testado com 1, 2 e 4 threads. Em `N=32`, a sobrecarga do paralelismo dominou e o aumento de threads reduziu o throughput observado.
+O Chapter6 distribui os blocos de colunas com OpenMP; a campanha mede 1, 2 e 4 threads nos tamanhos `N=128` e `N=256`.
 
-### 5.6 Bibliotecas de referência
+### 6.6 Bibliotecas de referência
 
-MKL e PyTorch/CUDA não foram incluídos porque as dependências correspondentes não estão disponíveis no ambiente atual.
+MKL e PyTorch não foram avaliados neste trabalho. O WSL 2 com Ubuntu 24.04 está instalado, mas CUDA no WSL não foi validado: o driver NVIDIA do Windows é a versão 451.67, abaixo da versão R495 indicada pela NVIDIA para CUDA no WSL, e a GeForce MX110, baseada em Maxwell, não tem suporte oficial nesse ambiente. Assim, os resultados apresentados se restringem às implementações C executadas na CPU; não há comparação com PyTorch nem com GPU.
 
 ## 7. Resultados
 
-As tabelas das três partes estão nos respectivos relatórios e os dados brutos estão em `resultados_parte1.csv`, `resultados_parte2.csv` e `resultados_parte3.csv`. O notebook [DGEMM_analise.ipynb](DGEMM_analise.ipynb) reúne a leitura dos dados e os gráficos preliminares. O script [analisar_resultados.py](analisar_resultados.py) reproduz as estatísticas pela linha de comando e separa os resultados por tamanho de matriz e número de threads.
+As tabelas preliminares estão nos relatórios parciais. A campanha ampliada contém 200 observações em [resultados_campanha.csv](resultados_campanha.csv); o script [analisar_resultados.py](analisar_resultados.py) calcula média, mediana, desvio padrão, mínimo e máximo por variante, dimensão, bloco e número de threads.
 
-### 6.1 Efeito do tamanho da matriz
+### 7.1 Efeito do tamanho da matriz
 
-No baseline, foram observados `2,45`, `2,63` e `2,53 GFLOPS` nas três repetições de `N=32`; as execuções preliminares de `N=64` e `N=128` produziram `2,28` e `1,93 GFLOPS`.
+Na campanha preliminar do Windows, o baseline obteve `2,45`, `2,63` e `2,53 GFLOPS` nas três repetições de `N=32`; as execuções preliminares de `N=64` e `N=128` produziram `2,28` e `1,93 GFLOPS`. Esses valores não pertencem à campanha pareada do WSL.
 
-### 6.2 Efeito do tamanho do bloco
+### 7.2 Campanha ampliada: variantes SIMD
 
-Nesta versão foi avaliado o bloco de `32 x 32`. Uma varredura de tamanhos alternativos permanece como melhoria possível.
+Medianas em GFLOPS das cinco repetições, no WSL 2:
 
-### 6.3 Efeito do número de threads
+| N | Escalar | AVX2 | AVX2 + FMA | AVX2 + FMA + unrolling x4 |
+|---:|---:|---:|---:|---:|
+| 128 | 1,91 | 7,77 | 7,88 | 20,98 |
+| 256 | 1,06 | 4,86 | 4,21 | 9,60 |
 
-Com `N=32`, o blocking obteve `25,48 GFLOPS`, enquanto OpenMP obteve `10,06`, `2,10` e `1,14 GFLOPS` com 1, 2 e 4 threads, respectivamente.
+FMA isolado não apresentou ganho claro em relação a AVX2 nesta medição; a versão com quatro acumuladores teve mediana maior nos dois tamanhos.
 
-### 6.4 Comparação entre implementações
+### 7.3 Campanha ampliada: blocking e OpenMP
 
-No experimento SIMD, o baseline obteve `2,53 GFLOPS`, AVX2 obteve `12,05 GFLOPS` e AVX2 + FMA + unrolling obteve `28,03 GFLOPS` em média.
+Medianas em GFLOPS. A coluna Blocking usa uma thread; as colunas OpenMP mostram a mesma variante com o número indicado de threads.
 
-### 6.5 Validação numérica
+| N | Bloco | Blocking, 1 thread | OpenMP, 1 thread | OpenMP, 2 threads | OpenMP, 4 threads |
+|---:|---:|---:|---:|---:|---:|
+| 128 | 8 | 10,32 | 5,81 | 22,96 | 45,44 |
+| 128 | 16 | 11,78 | 11,88 | 21,07 | 47,34 |
+| 128 | 32 | 10,07 | 6,47 | 23,39 | 46,40 |
+| 128 | 64 | 8,69 | 9,08 | 18,12 | 17,85 |
+| 256 | 8 | 9,04 | 9,93 | 12,78 | 27,69 |
+| 256 | 16 | 9,75 | 9,77 | 21,25 | 28,53 |
+| 256 | 32 | 7,57 | 8,49 | 18,55 | 22,69 |
+| 256 | 64 | 6,95 | 8,60 | 18,08 | 35,87 |
 
-As versões otimizadas foram comparadas com uma referência escalar independente no arquivo [validate_dgemm.c](validate_dgemm.c). Para `N=32`, AVX2, FMA/unrolling, blocking e OpenMP apresentaram erro máximo `0,000e+000`, com status `PASS` e tolerância `1e-12`.
+O melhor resultado depende do tamanho e do bloco: em `N=128`, bloco 16 com quatro threads obteve mediana de `47,34 GFLOPS`; em `N=256`, bloco 64 com quatro threads obteve `35,87 GFLOPS`. A dispersão de cada grupo está nos dados brutos e deve ser considerada ao interpretar diferenças próximas.
+
+### 7.4 Validação numérica
+
+O validador usa os mesmos kernels compartilhados que os executáveis dos Chapters. Em `N=32`, `128` e `256`, todas as variantes, blocos válidos e configurações de 1, 2 e 4 threads obtiveram `PASS`; o erro absoluto máximo registrado foi zero, com tolerância `1e-10`.
+
+Os resultados preliminares de `N=32` no Windows foram mantidos nos CSVs das partes como registros históricos. Eles foram medidos com outra campanha/ambiente e não devem ser comparados diretamente aos resultados pareados no WSL 2.
 
 ## 8. Discussão
 
-Os resultados indicam que AVX2 aumentou significativamente o desempenho em relação ao baseline, enquanto FMA e unrolling trouxeram ganho adicional. Esse comportamento é esperado, pois a operação de matrizes exige alta intensidade de cálculo e a vetorização permite processar múltiplos valores `double` em paralelo, reduzindo o número de instruções necessárias para completar o mesmo trabalho.
+Na campanha ampliada, AVX2 melhorou as medianas em relação ao escalar nos dois tamanhos. FMA sem unrolling teve efeito pequeno e não consistente, enquanto a combinação com quatro acumuladores atingiu medianas de `20,98 GFLOPS` em `N=128` e `9,60 GFLOPS` em `N=256`. Esses valores são específicos do compilador e ambiente usados.
 
-O blocking também apresentou bom resultado, confirmando a importância da localidade de referência e da reutilização de dados na cache. Em vez de acessar a memória de forma indiscriminada, a implementação em blocos reduz a distância entre os dados necessários em um trecho da computação e melhora a eficiência do uso da hierarquia de memória.
+No blocking sem OpenMP, o bloco 16 teve a maior mediana entre os tamanhos testados tanto em `N=128` quanto em `N=256` (11,78 e 9,75 GFLOPS). Considerando OpenMP, a melhor combinação mudou: bloco 16 com quatro threads em `N=128` e bloco 64 com quatro threads em `N=256`. Isso reforça a necessidade de avaliar conjuntamente dimensão, bloco e paralelismo.
 
-Já o OpenMP não compensou para `N=32`, pois a matriz pequena não forneceu trabalho suficiente para amortizar o custo de criação, distribuição e sincronização das threads. Esse resultado reforça a ideia de que paralelismo não é uma otimização automática: ele só traz benefício quando a carga computacional é suficientemente grande para justificar a sobrecarga de gerenciamento das threads.
+Na campanha preliminar de `N=32`, OpenMP não compensou; em `N=128` e `N=256`, várias combinações de bloco e threads aumentaram o throughput, embora com variabilidade e sensibilidade aos parâmetros. Assim, o resultado da matriz pequena não deve ser generalizado para problemas maiores.
 
-As conclusões são específicas da máquina testada. O tamanho `N=32` é pequeno para avaliar escalabilidade OpenMP, e MKL, PyTorch e CUDA não foram executados por falta das dependências correspondentes. Portanto, o estudo deve ser interpretado como uma investigação de comportamento sob um ambiente concreto, e não como regra universal para todas as arquiteturas.
+As conclusões são específicas do Intel Core i5-10210U, do GCC 13.3 e da execução no WSL 2. Os testes ampliados mitigam a limitação de `N=32`, mas ainda cobrem apenas duas dimensões e quatro blocos. MKL e PyTorch não foram avaliados, e CUDA no WSL não foi validado pelas limitações do driver e da GeForce MX110.
 
-Para uma campanha futura, seria interessante testar matrizes maiores e mais tamanhos de bloco, além de medir a sensibilidade da implementação em relação ao número de threads e ao nível de cache disponível.
+Como continuação, seria útil repetir a campanha em matrizes ainda maiores, testar mais blocos e coletar execuções em outras arquiteturas para avaliar a generalização dos resultados.
 
 A leitura dos resultados deve considerar também os seguintes pontos:
 
@@ -168,17 +199,17 @@ A leitura dos resultados deve considerar também os seguintes pontos:
 
 ## 9. Conclusão
 
-Os resultados preliminares mostram ganhos consistentes com AVX2, FMA, unrolling e blocking. Esses ganhos confirmam a hipótese central do projeto: quando a implementação se alinha ao modelo de execução da microarquitetura, o desempenho do DGEMM pode aumentar de maneira muito expressiva.
+Os resultados pareados mostram ganhos de SIMD e de unrolling em relação ao escalar, além de ganhos de blocking/OpenMP que dependem de `N`, bloco e threads. Isso sustenta a hipótese de que o alinhamento entre implementação e microarquitetura pode elevar o desempenho, mas também evidencia que nenhuma configuração é universalmente superior.
 
-O OpenMP não apresentou ganho em `N=32`, indicando que a sobrecarga de threads precisa ser amortizada por problemas maiores. Esse comportamento é coerente com a teoria de paralelismo: para matrizes pequenas, o custo de sincronização e distribuição do trabalho pode superar o ganho de throughput.
+OpenMP reduziu o desempenho na medição preliminar de `N=32`, mas melhorou o throughput em diversas combinações de `N=128` e `N=256`. O resultado depende da quantidade de trabalho disponível e da escolha do bloco.
 
-A corretude numérica foi validada em `N=32` com erro máximo zero, o que garante que os ganhos observados não foram obtidos à custa de resultados incorretos. As principais limitações restantes são a campanha reduzida de tamanhos e a indisponibilidade de MKL e PyTorch/CUDA. Mesmo assim, os experimentos deixam evidente que as otimizações estudadas têm impacto real sobre a eficiência do DGEMM.
+A corretude foi validada diretamente sobre os kernels compartilhados usados pelos executáveis, para `N=32`, `128` e `256`, com todos os casos testados aprovados. Permanecem como limitações a quantidade de dimensões, a ausência de comparação com MKL/PyTorch e a impossibilidade de validar CUDA no WSL com a configuração atual.
 
 ## 10. Requisitos e limitações do ambiente
 
-Os experimentos foram realizados em Windows, com Intel Core i5-10210U, 4 nucleos, 8 threads, aproximadamente 8 GB de RAM, GCC 8.1.0 e Python 3.7.8. O ambiente suportou AVX2, FMA e OpenMP. Como `make` nao estava instalado, os programas C foram compilados diretamente com GCC. MKL, PyTorch e CUDA nao estavam disponiveis e, portanto, nao foram incluidos na comparacao principal.
+As medições preliminares foram feitas em Windows com Intel Core i5-10210U e GCC 8.1.0. A campanha ampliada foi executada em Ubuntu 24.04 sob WSL 2, com GCC 13.3.0, 4 núcleos/8 threads e AVX2/FMA/OpenMP disponíveis. CUDA não foi validado: o driver NVIDIA 451.67 é inferior ao R495 indicado para CUDA no WSL e a MX110, baseada em Maxwell, não tem suporte oficial nesse ambiente. Não houve comparação com PyTorch ou GPU.
 
 ## 11. Referências
 
-- PATTERSON, David A.; HENNESSY, John L. *Computer Organization and Design: The Hardware/Software Interface, RISC-V Edition*. Morgan Kaufmann.
+- PATTERSON, David A.; HENNESSY, John L. *Computer Organization and Design RISC-V Edition: The Hardware/Software Interface*. 2nd ed. Morgan Kaufmann, 2021. ISBN 978-0-12-820331-6.
 - Documentação das bibliotecas utilizadas e outras fontes consultadas.

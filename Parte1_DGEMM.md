@@ -1,6 +1,12 @@
 # Parte 1 - Investigacao inicial do DGEMM
 
-Repositorio: https://github.com/Ezequielsj/DGEMM
+## Links do projeto no GitHub
+
+- Repositório: [DGEMM](https://github.com/Ezequielsj/DGEMM)
+- Este relatório: [Parte1_DGEMM.md](https://github.com/Ezequielsj/DGEMM/blob/master/Parte1_DGEMM.md)
+- Resultados: [resultados_parte1.csv](https://github.com/Ezequielsj/DGEMM/blob/master/resultados_parte1.csv)
+- Campanha ampliada: [resultados_campanha.csv](https://github.com/Ezequielsj/DGEMM/blob/master/resultados_campanha.csv)
+- Implementação baseline: [Chapter2/main_algorithm.c](https://github.com/Ezequielsj/DGEMM/blob/master/Chapter2/main_algorithm.c)
 
 ## Integrantes
 
@@ -71,8 +77,8 @@ A Parte 2 acrescentara instrucoes SIMD com AVX2, FMA e desenrolamento de lacos. 
 
 ## Requisitos e limitacoes do ambiente
 
-Os testes foram realizados em Windows, com Intel Core i5-10210U, 4 nucleos, 8 threads, aproximadamente 8 GB de RAM, GCC 8.1.0 e Python 3.7.8. O compilador suportou AVX2, FMA e OpenMP. O comando `make` nao estava instalado, por isso a compilacao foi feita diretamente com GCC. MKL, PyTorch e CUDA nao estavam disponiveis no ambiente.
+Os resultados desta etapa sao a campanha preliminar de baseline, executada em Windows com Intel Core i5-10210U e GCC 8.1.0. A campanha ampliada de `N=128` e `N=256` foi executada separadamente em Ubuntu 24.04 sob WSL 2 com GCC 13.3.0; os dados estao em [resultados_campanha.csv](resultados_campanha.csv). PyTorch e MKL nao foram avaliados. CUDA no WSL nao foi validado: o driver NVIDIA do Windows e a versao 451.67, abaixo da versao R495 indicada pela NVIDIA para CUDA no WSL, e a GeForce MX110, baseada em Maxwell, nao tem suporte oficial nesse ambiente.
 
 ## Referencia
 
-PATTERSON, David A.; HENNESSY, John L. *Computer Organization and Design: The Hardware/Software Interface, RISC-V Edition*. Morgan Kaufmann.
+PATTERSON, David A.; HENNESSY, John L. *Computer Organization and Design RISC-V Edition: The Hardware/Software Interface*. 2nd ed. Morgan Kaufmann, 2021. ISBN 978-0-12-820331-6.
