@@ -59,13 +59,15 @@ Para as tres repeticoes de `N=32`, a media foi `2,53 GFLOPS`, a mediana foi `2,5
 
 ## 5. Interpretacao preliminar
 
-Os resultados de `N=32` agora possuem tres repeticoes e sao uma referencia mais estavel para a Parte 2. Os valores de `N=64` e `N=128` continuam preliminares. A implementacao foi executada com sucesso, mas a validacao numerica automatica do conteudo de `C` ainda sera acrescentada antes da conclusao final.
+Os resultados de `N=32` agora possuem tres repeticoes e sao uma referencia mais estavel para a Parte 2. Os valores de `N=64` e `N=128` continuam preliminares, mas ja mostram que a performance do baseline e relativamente baixa mesmo em matrizes pequenas. Esse comportamento e esperado, pois a implementacao escalar realiza os tres lacos aninhados sem qualquer ajuda do hardware em termos de vetorizacao ou reutilizacao de cache.
 
-A principal conclusao desta etapa e que a implementacao escalar compila e executa corretamente no ambiente atual, oferecendo uma base concreta para comparar vetorizacao, desenrolamento de lacos, blocking e paralelismo. A referencia usada na validacao numerica foi calculada por uma versao escalar independente.
+A implementacao foi executada com sucesso, mas a validacao numerica automatica do conteudo de `C` ainda sera acrescentada antes da conclusao final. Mesmo assim, a base operacional do problema ja foi validada: a rotina compila, executa e produz tempos consistentes no ambiente atual.
+
+A principal conclusao desta etapa e que a implementacao escalar compila e executa corretamente no ambiente atual, oferecendo uma base concreta para comparar vetorizacao, desenrolamento de lacos, blocking e paralelismo. A referencia usada na validacao numerica foi calculada por uma versao escalar independente, e a variacao observada entre as repeticoes e pequena o suficiente para permitir comparacoes com as otimizacoes seguintes.
 
 ## 6. Proxima etapa
 
-A Parte 2 acrescentara instrucoes SIMD com AVX2, FMA e desenrolamento de lacos. A comparacao devera manter o mesmo tamanho de matriz e criterio de medicao sempre que a implementacao permitir.
+A Parte 2 acrescentara instrucoes SIMD com AVX2, FMA e desenrolamento de lacos. A comparacao devera manter o mesmo tamanho de matriz e criterio de medicao sempre que a implementacao permitir, de forma a isolar o efeito das otimizacoes sobre a mesma carga de trabalho.
 
 ## Requisitos e limitacoes do ambiente
 

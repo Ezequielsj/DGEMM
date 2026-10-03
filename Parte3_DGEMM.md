@@ -53,6 +53,8 @@ O programa [validate_dgemm.c](validate_dgemm.c) calcula uma referencia escalar i
 
 O blocking apresentou o maior throughput neste teste. A versao OpenMP nao superou o blocking para `N=32`; com mais threads, o resultado caiu. Isso nao contradiz a expectativa de paralelismo: neste tamanho, o trabalho total e pequeno e o custo de criar, distribuir e sincronizar as threads pode ser maior que o ganho obtido com a divisao do trabalho.
 
+Esse comportamento evidencia que paralelismo e localidade de memoria devem ser avaliados em conjunto. O blocking melhora a reutilizacao de dados na cache e reduz a distancia entre os acessos consecutivos, enquanto o OpenMP acrescenta overhead de sincronizacao e distribuicao de trabalho. Em matrizes pequenas, esse overhead tende a dominar, e o ganho de paralelismo desaparece ou se torna negativo.
+
 Portanto, nao e correto concluir que OpenMP sempre piora o DGEMM. A conclusao limitada e que, para a configuracao testada, o tamanho do problema nao foi suficiente para amortizar o custo do paralelismo. A campanha final deve testar `N` maiores, como `64`, `128` e `256`, alem de repetir cada configuracao mais vezes.
 
 ## 7. Limitacoes e pendencias

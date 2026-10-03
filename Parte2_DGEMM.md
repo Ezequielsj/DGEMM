@@ -61,13 +61,15 @@ Os GFLOPS foram calculados por `2 * N^3 * multiplicacoes / (tempo * 10^9)`. As e
 
 Com tres repeticoes, a vetorizacao AVX2 atingiu media de `12,05 GFLOPS`, aproximadamente `4,76x` o baseline. A combinacao de FMA e quatro acumuladores atingiu `28,03 GFLOPS`, aproximadamente `11,08x` o baseline e cerca de `2,33x` a media do AVX2.
 
-Esses valores sao uma campanha preliminar: a janela de 0,5 segundos e tres repeticoes permitem comparar as versoes, mas a validacao numerica automatica contra uma referencia ainda precisa ser acrescentada ao experimento final.
+Esse ganho e consistente com a ideia de SIMD: ao processar quatro valores em paralelo, a implementacao reduz a quantidade de instrucoes de carga, multiplicacao e soma que o processador precisa executar. A adicao de FMA e desenrolamento de laços aumenta ainda mais o paralelismo de instrucoes e reduz a sobrecarga de controle do loop, o que explica a melhora significativa observada em relacao ao AVX2 puro.
+
+Esses valores sao uma campanha preliminar: a janela de 0,5 segundos e tres repeticoes permitem comparar as versoes, mas a validacao numerica automatica contra uma referencia ainda precisa ser acrescentada ao experimento final. Mesmo assim, a tendencia e clara: a otimizacao de instrucoes produz um ganho muito superior ao baseline.
 
 A execucao confirmou que as duas implementacoes otimizadas compilam e funcionam no ambiente atual. O teste independente [validate_dgemm.c](validate_dgemm.c) tambem confirmou erro maximo `0` para AVX2 e AVX2 + FMA + unrolling, usando tolerancia `1e-12`. O blocking e o OpenMP sao apresentados na [Parte 3](Parte3_DGEMM.md).
 
 ## 7. Proxima etapa
 
-A Parte 3 acrescenta cache blocking/tiling e investiga OpenMP e o numero de threads.
+A Parte 3 acrescenta cache blocking/tiling e investiga OpenMP e o numero de threads. Essa etapa e importante porque ela verifica se o ganho de SIMD continua relevante quando a organizacao da memoria e a distribuicao do trabalho passam a ser fatores limitantes.
 
 ## Requisitos e limitacoes do ambiente
 
